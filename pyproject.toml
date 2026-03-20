@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "policyrail-ai"
+dynamic = ["version"]
+description = "Policy-driven guardrails for GenAI runtimes, copilots and agents."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Jeff Tengan" }
+]
+keywords = [
+  "genai",
+  "llm",
+  "security",
+  "prompt-injection",
+  "guardrails",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+openai = ["openai>=1.0"]
+azure = ["openai>=1.0", "azure-identity>=1.17"]
+anthropic = ["anthropic>=0.37"]
+google = ["google-genai>=1.0"]
+aws = ["boto3>=1.34"]
+all = [
+  "openai>=1.0",
+  "azure-identity>=1.17",
+  "anthropic>=0.37",
+  "google-genai>=1.0",
+  "boto3>=1.34",
+]
+
+[project.scripts]
+policyrail = "policyrail.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {attr = "policyrail._version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
