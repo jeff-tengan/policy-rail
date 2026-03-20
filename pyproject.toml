@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "policyrail-ai"
 dynamic = ["version"]
 description = "Policy-driven guardrails for GenAI runtimes, copilots and agents."
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -27,6 +28,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Security",
   "Topic :: Software Development :: Libraries :: Python Modules",
+  "License :: OSI Approved :: MIT License",
 ]
 dependencies = []
 

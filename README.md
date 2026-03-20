@@ -273,3 +273,7 @@ PolicyRail is not limited to preflight judges. The main generation path is also 
 - versioned policies by environment and tenant
 - richer SIEM and observability integrations
 - domain-specific validators for RAG, agents, MCP, and tool-heavy workflows
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

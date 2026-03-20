@@ -273,3 +273,7 @@ O `PolicyRail` nao e apenas um preflight judge. O caminho principal de geracao t
 - policies versionadas por ambiente e tenant
 - integracoes mais ricas com SIEM e observabilidade
 - validadores especificos para RAG, agentes, MCP e fluxos com muitas tools
+
+## Licença
+
+Este projeto é licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
