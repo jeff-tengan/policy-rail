@@ -6,8 +6,8 @@ PolicyRail is currently maintained as a single active minor line.
 
 | Version | Supported |
 | --- | --- |
-| `0.6.x` | Yes |
-| `<0.6.0` | No |
+| `0.7.x` | Yes |
+| `<0.7.0` | No |
 
 ## Security Scope
 

@@ -25,7 +25,7 @@ jobs:
           python -m pip install -e ".[release]"
 
       - name: Run unit tests
-        run: python -m unittest discover -s tests -v
+        run: python -m pytest tests/ -v --tb=short
 
       - name: Clean build directories
         run: rm -rf build dist

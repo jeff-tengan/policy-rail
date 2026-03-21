@@ -17,8 +17,10 @@ from ..core.models import (
 )
 from ..core.partitioning import ContextPartitioner
 from ..core.policies import PolicyEngine
+from ..core.sanitizers import ContextSanitizer
 from ..core.validators import OutputValidator
 from ..observability.audit import JsonAuditLogger
+from ..observability.events import AuditEvent, EventEmitter
 
 
 class LLMAdapter(Protocol):
@@ -85,6 +87,8 @@ class SecureGenAIPipeline:
         audit_logger: JsonAuditLogger | None = None,
         llm_adapter: LLMAdapter | None = None,
         tool_executor: ToolExecutor | None = None,
+        context_sanitizer: ContextSanitizer | None = None,
+        event_emitters: list[EventEmitter] | None = None,
     ) -> None:
         self.detector = detector or PromptInjectionDetector()
         self.partitioner = partitioner or ContextPartitioner()
@@ -93,8 +97,11 @@ class SecureGenAIPipeline:
         self.audit_logger = audit_logger or JsonAuditLogger()
         self.llm_adapter = llm_adapter or MockLLMAdapter()
         self.tool_executor = tool_executor
+        self.context_sanitizer = context_sanitizer
+        self.event_emitters: list[EventEmitter] = list(event_emitters or [])
 
     def process(self, request: SecureRequest) -> SecureResponse:
+        sanitization_meta = self._sanitize_untrusted_context(request)
         envelope = self.partitioner.build_envelope(request)
         risk = self._assess_risk(request)
 
@@ -112,6 +119,7 @@ class SecureGenAIPipeline:
                 tool_call=None,
                 tool_result=None,
                 model_metadata={},
+                sanitization_meta=sanitization_meta,
             )
 
         llm_response = self.llm_adapter.generate(envelope)
@@ -132,6 +140,7 @@ class SecureGenAIPipeline:
                 tool_call=None,
                 tool_result=None,
                 model_metadata=llm_response.metadata,
+                sanitization_meta=sanitization_meta,
             )
 
         tool_validation_errors = self._validate_tool_call(tool_call)
@@ -150,6 +159,7 @@ class SecureGenAIPipeline:
                 tool_call=None,
                 tool_result=None,
                 model_metadata=llm_response.metadata,
+                sanitization_meta=sanitization_meta,
             )
 
         tool_result = self._execute_tool(tool_call)
@@ -171,6 +181,7 @@ class SecureGenAIPipeline:
             tool_call=tool_call,
             tool_result=tool_result,
             model_metadata=model_metadata,
+            sanitization_meta=sanitization_meta,
         )
 
     def _assess_risk(self, request: SecureRequest) -> RiskAssessment:
@@ -213,6 +224,7 @@ class SecureGenAIPipeline:
         tool_call: ToolCall | None,
         tool_result: ToolExecutionResult | None,
         model_metadata: dict | None = None,
+        sanitization_meta: dict | None = None,
     ) -> SecureResponse:
         response = SecureResponse(
             status=decision.status,
@@ -238,7 +250,89 @@ class SecureGenAIPipeline:
         except Exception as exc:
             response.audit_id = None
             response.model_metadata["audit_logging_error"] = exc.__class__.__name__
+
+        self._emit_events(
+            request=request,
+            risk=risk,
+            decision=decision,
+            output_validation=output_validation,
+            response_text=response_text,
+            tool_call=tool_call,
+            tool_result=tool_result,
+            audit_id=response.audit_id,
+            sanitization_meta=sanitization_meta,
+        )
+
         return response
+
+    def _sanitize_untrusted_context(self, request: SecureRequest) -> dict:
+        if self.context_sanitizer is None or not request.untrusted_context:
+            return {"applied": False, "rules": []}
+
+        results = self.context_sanitizer.sanitize_many(request.untrusted_context)
+        all_rules: list[str] = []
+        sanitized_items: list[str] = []
+        for result in results:
+            sanitized_items.append(result.sanitized_text)
+            all_rules.extend(result.applied_rules)
+
+        request.untrusted_context = sanitized_items
+        return {
+            "applied": bool(all_rules),
+            "rules": list(dict.fromkeys(all_rules)),
+        }
+
+    def _emit_events(
+        self,
+        *,
+        request: SecureRequest,
+        risk: RiskAssessment,
+        decision: PolicyDecision,
+        output_validation: OutputValidation,
+        response_text: str,
+        tool_call: ToolCall | None,
+        tool_result: ToolExecutionResult | None,
+        audit_id: str | None,
+        sanitization_meta: dict | None = None,
+    ) -> None:
+        if not self.event_emitters:
+            return
+
+        san = sanitization_meta or {}
+        event = AuditEvent(
+            event_id=audit_id or "",
+            metadata=dict(request.metadata),
+            user_input_preview=request.user_input[:280],
+            trusted_context_count=len(request.trusted_context),
+            untrusted_context_count=len(request.untrusted_context),
+            risk_score=risk.score,
+            risk_blocked=risk.blocked,
+            risk_findings=[
+                {
+                    "rule_id": f.rule_id,
+                    "category": f.category,
+                    "source": f.source,
+                }
+                for f in risk.findings
+            ],
+            decision=decision.status,
+            decision_reasons=list(decision.reasons),
+            tool_name=tool_call.name if tool_call else None,
+            tool_allowed=decision.allow_tool_execution,
+            tool_execution_success=tool_result.success if tool_result else None,
+            tool_execution_metadata=dict(tool_result.metadata) if tool_result else {},
+            output_passed=output_validation.passed,
+            output_violations=list(output_validation.violations),
+            response_preview=response_text[:280],
+            sanitization_applied=san.get("applied", False),
+            sanitization_rules=san.get("rules", []),
+        )
+
+        for emitter in self.event_emitters:
+            try:
+                emitter.emit(event)
+            except Exception:
+                pass
 
     def _execute_tool(self, tool_call: ToolCall | None) -> ToolExecutionResult | None:
         if tool_call is None or self.tool_executor is None:

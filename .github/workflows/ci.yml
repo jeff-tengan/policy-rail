@@ -7,7 +7,31 @@ on:
   pull_request:
 
 jobs:
-  test-and-build:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run unit tests
+        run: python -m pytest tests/ -v --tb=short
+
+  build:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -23,9 +47,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[release]"
-
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -v
 
       - name: Clean build directories
         run: rm -rf build dist

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 - 2026-03-21
+
+- hardened `LightweightNLPClassifier` with 8 new signals covering roleplay escaping, semantic evasion, context delimiter injection, backdoor attempts, credential extraction, and rule-forgetting attacks
+- added `ContextSanitizer` for neutralizing prompt-injection patterns in untrusted context before prompt envelope construction
+- added `AuditEvent` dataclass and `EventEmitter` protocol for pluggable observability sinks (SIEM, OpenTelemetry, webhooks)
+- integrated optional `context_sanitizer` and `event_emitters` into `SecureGenAIPipeline`
+- enhanced CI workflow with Python 3.10, 3.11, and 3.12 matrix and switched to pytest
+- exported `ContextSanitizer`, `SanitizationResult`, `AuditEvent`, `EventEmitter`, and `InMemoryEventEmitter` from the public API
+
 ## 0.6.0 - 2026-03-21
 
 - hardened audit logging with recursive redaction and non-blocking failure behavior

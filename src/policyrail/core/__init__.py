@@ -20,10 +20,12 @@ from .models import (
 )
 from .partitioning import ContextPartitioner
 from .policies import PolicyEngine
+from .sanitizers import ContextSanitizer, SanitizationResult
 from .validators import OutputValidator
 
 __all__ = [
     "ContextPartitioner",
+    "ContextSanitizer",
     "CallablePreflightClassifier",
     "LightweightNLPClassifier",
     "LLMResponse",
@@ -37,6 +39,7 @@ __all__ = [
     "PromptInjectionDetector",
     "RiskAssessment",
     "RiskFinding",
+    "SanitizationResult",
     "SecureRequest",
     "SecureResponse",
     "ToolCall",

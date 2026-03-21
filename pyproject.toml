@@ -46,7 +46,7 @@ Contributing = "https://github.com/jeff-tengan/PolicyRail/blob/main/CONTRIBUTING
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
-release = ["build>=1.2", "twine>=5.1"]
+release = ["pytest>=8.0", "build>=1.2", "twine>=5.1"]
 openai = ["openai>=1.0"]
 azure = ["openai>=1.0", "azure-identity>=1.17"]
 anthropic = ["anthropic>=0.37"]

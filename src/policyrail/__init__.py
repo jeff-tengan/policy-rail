@@ -21,6 +21,7 @@ from .core.models import (
 )
 from .core.partitioning import ContextPartitioner
 from .core.policies import PolicyEngine
+from .core.sanitizers import ContextSanitizer, SanitizationResult
 from .core.validators import OutputValidator
 from .integrations import (
     AnthropicPreflightClassifier,
@@ -57,20 +58,25 @@ from .mcp import (
     StreamableHTTPMCPTransport,
 )
 from .observability.audit import JsonAuditLogger
+from .observability.events import AuditEvent, EventEmitter, InMemoryEventEmitter
 from .pipeline.secure_pipeline import LLMAdapter, MockLLMAdapter, SecureGenAIPipeline, ToolExecutor
 
 __all__ = [
     "AnthropicPreflightClassifier",
+    "AuditEvent",
     "AzureOpenAIPreflightClassifier",
     "BedrockPreflightClassifier",
     "CallableVerdictClassifier",
     "ContextPartitioner",
+    "ContextSanitizer",
     "CallablePreflightClassifier",
     "DEFAULT_MCP_PROTOCOL_VERSION",
     "DEFAULT_LLM_JUDGE_SYSTEM_PROMPT",
     "DEFAULT_OPENAI_PREFLIGHT_PROMPT",
+    "EventEmitter",
     "GoogleGenAIPreflightClassifier",
     "HTTPMCPTransport",
+    "InMemoryEventEmitter",
     "InMemoryMCPTransport",
     "JSONRPCMCPClient",
     "JsonAuditLogger",
@@ -102,6 +108,7 @@ __all__ = [
     "RemoteJudgePreflightClassifier",
     "RiskAssessment",
     "RiskFinding",
+    "SanitizationResult",
     "SecureGenAIPipeline",
     "SecureRequest",
     "SecureResponse",

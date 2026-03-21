@@ -106,6 +106,54 @@ def _default_malicious_signals() -> list[ClassificationSignal]:
             keywords=("rot13",),
             weight=0.7,
         ),
+        ClassificationSignal(
+            signal_id="roleplay_escape_pt",
+            description="Tentativa de escapar via roleplay ou persona alternativa.",
+            keywords=("agora", "voce"),
+            weight=2.8,
+        ),
+        ClassificationSignal(
+            signal_id="roleplay_escape_en",
+            description="Attempt to escape via roleplay or alternate persona.",
+            keywords=("now", "you", "are"),
+            weight=2.8,
+        ),
+        ClassificationSignal(
+            signal_id="semantic_disregard_pt",
+            description="Tentativa de desconsiderar regras usando sinonimos semanticos.",
+            keywords=("desconsidere",),
+            weight=3.0,
+        ),
+        ClassificationSignal(
+            signal_id="context_delimiter_en",
+            description="Tentativa de injetar delimitadores de contexto privilegiado.",
+            keywords=("system", "override"),
+            weight=3.0,
+        ),
+        ClassificationSignal(
+            signal_id="context_delimiter_pt",
+            description="Tentativa de injetar autorizacao de sistema via delimitador.",
+            keywords=("autorizacao", "root"),
+            weight=3.0,
+        ),
+        ClassificationSignal(
+            signal_id="backdoor_attempt",
+            description="Tentativa de criar acesso backdoor.",
+            keywords=("backdoor",),
+            weight=3.5,
+        ),
+        ClassificationSignal(
+            signal_id="credential_extraction",
+            description="Tentativa de extrair senhas ou credenciais.",
+            keywords=("senhas",),
+            weight=3.0,
+        ),
+        ClassificationSignal(
+            signal_id="forget_rules_pt",
+            description="Tentativa de fazer o modelo esquecer regras.",
+            keywords=("esqueca",),
+            weight=3.0,
+        ),
     ]
 
 
