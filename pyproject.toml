@@ -23,8 +23,9 @@ keywords = [
   "model-context-protocol",
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -40,6 +41,8 @@ Documentation = "https://github.com/jeff-tengan/PolicyRail#readme"
 Repository = "https://github.com/jeff-tengan/PolicyRail"
 Changelog = "https://github.com/jeff-tengan/PolicyRail/blob/main/CHANGELOG.md"
 Issues = "https://github.com/jeff-tengan/PolicyRail/issues"
+Security = "https://github.com/jeff-tengan/PolicyRail/blob/main/SECURITY.md"
+Contributing = "https://github.com/jeff-tengan/PolicyRail/blob/main/CONTRIBUTING.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

@@ -30,6 +30,11 @@ class _SearchAdapter:
         )
 
 
+class _BrokenAuditLogger:
+    def record_interaction(self, **_: object) -> str:
+        raise RuntimeError("disk full")
+
+
 class SecurePipelineTests(unittest.TestCase):
     def test_pipeline_blocks_unsafe_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -66,6 +71,19 @@ class SecurePipelineTests(unittest.TestCase):
         self.assertIsNotNone(response.tool_call)
         self.assertEqual(response.tool_call.name, "search_docs")
         self.assertEqual(response.model_metadata["sources"], ["kb://logs-policy"])
+
+    def test_pipeline_survives_audit_logger_failure(self) -> None:
+        pipeline = SecureGenAIPipeline(audit_logger=_BrokenAuditLogger())
+        response = pipeline.process(
+            SecureRequest(
+                user_input="Explique a politica de logs",
+                system_instruction=DEFAULT_SYSTEM_POLICY,
+            )
+        )
+
+        self.assertEqual(response.status, "allow")
+        self.assertIsNone(response.audit_id)
+        self.assertEqual(response.model_metadata["audit_logging_error"], "RuntimeError")
 
 
 if __name__ == "__main__":

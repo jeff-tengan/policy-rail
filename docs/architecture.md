@@ -4,6 +4,16 @@ Portuguese translation: [architecture.pt-BR.md](./architecture.pt-BR.md)
 
 This document explains how PolicyRail is organized internally and where teams are expected to extend it. The architecture is intentionally small: the library should be easy to drop into a new GenAI project without forcing the rest of the application into a rigid framework shape.
 
+## What PolicyRail Is
+
+PolicyRail is a library-first guardrails toolkit with a small runtime orchestration layer.
+
+- It is a library because applications call its contracts directly.
+- It contains framework-like building blocks because it ships a reusable secure pipeline.
+- It is not a full-stack agent framework or a complete MCP SDK.
+
+That boundary is deliberate: PolicyRail aims to provide governance and safety structure without taking ownership of the whole application.
+
 ## Layered View
 
 ```mermaid
@@ -88,7 +98,7 @@ For MCP scenarios, PolicyRail includes a dedicated integration layer:
 
 - `JSONRPCMCPClient` for `tools/list` and `tools/call`
 - `MCPToolRegistry` to translate discovered MCP tools into `ToolSpec`
-- `MCPToolExecutor` to execute approved MCP tool calls through the pipeline
+- `MCPToolExecutor` to validate tool arguments against the discovered `inputSchema` and execute approved MCP tool calls through the pipeline
 - `InMemoryMCPTransport` for tests and local integration work
 - `StdioMCPTransport` for subprocess-based MCP servers
 - `StreamableHTTPMCPTransport` for HTTP MCP servers with session support
@@ -104,7 +114,7 @@ For MCP scenarios, PolicyRail includes a dedicated integration layer:
 
 ### 5. Audit Sinks
 
-`JsonAuditLogger` is the default sink because it is portable and easy to inspect. Teams with stricter observability requirements can replace it with a custom audit sink that forwards events to SIEM, event buses, or internal logging platforms.
+`JsonAuditLogger` is the default sink because it is portable and easy to inspect. It now redacts sensitive metadata recursively and avoids propagating audit failures back into the main request path. Teams with stricter observability requirements can replace it with a custom audit sink that forwards events to SIEM, event buses, or internal logging platforms.
 
 ## Provider Strategy
 
@@ -134,6 +144,8 @@ Remote preflight judges are designed to fail safely into a local fallback classi
 - the provider returns an unexpected verdict
 
 Unless you override it, the default fallback is `LightweightNLPClassifier`.
+
+When fallback happens, the classification is marked as degraded and the detector lifts the effective risk floor to human review. This prevents remote judge outages from degrading silently into `allow`.
 
 ## Design Decisions
 

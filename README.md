@@ -7,6 +7,31 @@ PolicyRail is a library-first guardrails framework for GenAI runtimes, copilots,
 
 This repository does not try to be a magical security layer. It provides a compact, auditable set of controls that teams can extend without giving the model final authority over sensitive behavior.
 
+## Project Status
+
+- Package maturity: beta
+- Python support: `3.10+`
+- Canonical documentation language: English
+- Current package version: `0.6.0`
+
+## Positioning
+
+PolicyRail is best understood as a **library-first guardrails toolkit**.
+
+- It is a **library** because applications import and compose its contracts directly.
+- It offers **framework-like primitives** such as a secure pipeline, policy engine, and MCP integration layer.
+- It is **not** an opinionated full-stack application framework that owns your runtime, API layer, storage model, or orchestration lifecycle.
+
+This is intentional. The goal is to provide strong security structure without forcing the rest of the product into a rigid architecture.
+
+## Documentation Map
+
+- Architecture: [docs/architecture.md](./docs/architecture.md)
+- MCP support matrix and limits: [docs/mcp.md](./docs/mcp.md)
+- Security policy: [SECURITY.md](./SECURITY.md)
+- Contribution guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Changelog: [CHANGELOG.md](./CHANGELOG.md)
+
 ## What PolicyRail Provides
 
 - prompt-injection detection backed by a pluggable preflight classifier
@@ -71,7 +96,7 @@ PolicyRail/
 - `ContextPartitioner`: builds a prompt envelope with clear trust boundaries.
 - `PolicyEngine`: decides `allow`, `review`, or `block`.
 - `OutputValidator`: catches or masks common output leaks.
-- `JsonAuditLogger`: writes minimized events to `logs/audit.jsonl`.
+- `JsonAuditLogger`: writes minimized, redacted events to `logs/audit.jsonl`.
 - `SecureGenAIPipeline`: orchestrates the full secure flow.
 
 ## Installation
@@ -93,7 +118,7 @@ Consume the package from another project:
 
 ```toml
 dependencies = [
-  "policyrail-ai>=0.5.0,<1.0.0",
+  "policyrail-ai>=0.6.0,<1.0.0",
 ]
 ```
 
@@ -180,6 +205,8 @@ There are three ways to plug preflight into your application:
 2. Use `CallablePreflightClassifier` when your code already returns a structured `PreflightClassification`.
 3. Use a remote judge, either through built-in provider adapters or through `CallableVerdictClassifier`.
 
+When a remote judge fails or returns an unrecognized verdict, PolicyRail marks the classification as degraded, falls back to the local classifier, and raises the effective risk floor to human review. The request no longer fails open silently.
+
 ### Remote Judge Providers
 
 Built-in adapters currently cover:
@@ -263,7 +290,7 @@ Main primitives:
 
 - `JSONRPCMCPClient`: transport-agnostic client for the standard `tools/list` and `tools/call` methods
 - `MCPToolRegistry`: converts discovered MCP tools into `ToolSpec` entries with least-privilege defaults
-- `MCPToolExecutor`: executes approved `ToolCall`s through MCP and returns structured `ToolExecutionResult`
+- `MCPToolExecutor`: validates tool arguments against the discovered `inputSchema`, then executes approved `ToolCall`s through MCP and returns structured `ToolExecutionResult`
 - `InMemoryMCPTransport`: test-friendly transport for local and CI scenarios
 - `StdioMCPTransport`: subprocess-based adapter for MCP servers exposed over stdio
 - `StreamableHTTPMCPTransport` and `HTTPMCPTransport`: adapters for Streamable HTTP MCP servers

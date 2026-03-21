@@ -3,11 +3,13 @@ from .client import (
     JSONRPCMCPClient,
     InMemoryMCPTransport,
     MCPClient,
+    MCPProtocolNegotiationError,
     MCPTransport,
     MCPTransportSessionExpired,
+    SUPPORTED_MCP_PROTOCOL_VERSIONS,
 )
-from .execution import MCPToolExecutor, MCPToolRegistry
-from .models import MCPTool, MCPToolPolicy, MCPToolResult
+from .execution import MCPToolArgumentValidationError, MCPToolExecutor, MCPToolRegistry
+from .models import MCPRoot, MCPServerStream, MCPTool, MCPToolPolicy, MCPToolResult
 from .transports import HTTPMCPTransport, StdioMCPTransport, StreamableHTTPMCPTransport
 
 __all__ = [
@@ -16,7 +18,11 @@ __all__ = [
     "InMemoryMCPTransport",
     "JSONRPCMCPClient",
     "MCPClient",
+    "MCPProtocolNegotiationError",
+    "MCPRoot",
+    "MCPServerStream",
     "MCPTool",
+    "MCPToolArgumentValidationError",
     "MCPToolExecutor",
     "MCPToolPolicy",
     "MCPToolRegistry",
@@ -24,5 +30,6 @@ __all__ = [
     "MCPTransport",
     "MCPTransportSessionExpired",
     "StdioMCPTransport",
+    "SUPPORTED_MCP_PROTOCOL_VERSIONS",
     "StreamableHTTPMCPTransport",
 ]

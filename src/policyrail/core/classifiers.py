@@ -23,6 +23,8 @@ class PreflightClassification:
     summary: str
     matched_signals: list[str]
     model_name: str
+    degraded: bool = False
+    degradation_reason: str | None = None
 
 
 class PreflightClassifier(Protocol):
@@ -161,6 +163,8 @@ class LightweightNLPClassifier:
                 summary="Classificador NLP nao encontrou indicios relevantes.",
                 matched_signals=[],
                 model_name=self.model_name,
+                degraded=False,
+                degradation_reason=None,
             )
 
         token_set = set(normalized.split())
@@ -194,6 +198,8 @@ class LightweightNLPClassifier:
             summary=summary,
             matched_signals=list(dict.fromkeys(matched_signals)),
             model_name=self.model_name,
+            degraded=False,
+            degradation_reason=None,
         )
 
     def _matches(self, signal: ClassificationSignal, token_set: set[str]) -> bool:
@@ -236,4 +242,6 @@ class CallablePreflightClassifier:
             summary=result.summary,
             matched_signals=result.matched_signals,
             model_name=self.model_name,
+            degraded=result.degraded,
+            degradation_reason=result.degradation_reason,
         )

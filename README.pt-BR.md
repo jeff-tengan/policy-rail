@@ -7,6 +7,31 @@ PolicyRail e uma biblioteca orientada a guardrails para runtimes de GenAI, copil
 
 O repositorio nao tenta vender uma camada "magica" de seguranca. Ele entrega um conjunto pequeno, extensivel e auditavel de controles para que times comecem com seguranca by default.
 
+## Status do Projeto
+
+- maturidade do pacote: beta
+- suporte de Python: `3.10+`
+- idioma canonico da documentacao: ingles
+- versao atual do pacote: `0.6.0`
+
+## Posicionamento
+
+O jeito mais correto de entender o PolicyRail e como uma **biblioteca orientada a guardrails**.
+
+- Ele e uma **biblioteca** porque a aplicacao importa e compoe seus contratos diretamente.
+- Ele oferece **primitivas com cara de framework**, como pipeline segura, policy engine e camada MCP.
+- Ele **nao** e um framework full-stack opinativo que toma posse do seu runtime, da sua API ou do ciclo completo de orquestracao.
+
+Isso e intencional: a ideia e adicionar estrutura de seguranca sem engessar a arquitetura do produto.
+
+## Mapa de Documentacao
+
+- arquitetura: [docs/architecture.md](./docs/architecture.md)
+- suporte MCP e limites atuais: [docs/mcp.md](./docs/mcp.md)
+- politica de seguranca: [SECURITY.md](./SECURITY.md)
+- guia de contribuicao: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- changelog: [CHANGELOG.md](./CHANGELOG.md)
+
 ## O Que a Biblioteca Entrega
 
 - deteccao de prompt injection baseada em classificador de preflight
@@ -93,7 +118,7 @@ Consumir em outro projeto:
 
 ```toml
 dependencies = [
-  "policyrail-ai>=0.5.0,<1.0.0",
+  "policyrail-ai>=0.6.0,<1.0.0",
 ]
 ```
 

@@ -4,6 +4,16 @@ English version: [architecture.md](./architecture.md)
 
 Este documento explica como o `PolicyRail` esta organizado internamente e onde os times devem estender a biblioteca. A arquitetura foi mantida propositalmente pequena: a ideia e entrar em um novo projeto de GenAI sem forcar a aplicacao a adotar um framework pesado.
 
+## O Que o PolicyRail E
+
+O `PolicyRail` e uma biblioteca orientada a guardrails com uma pequena camada de orquestracao de runtime.
+
+- E uma biblioteca porque a aplicacao consome seus contratos diretamente.
+- Traz primitivas com cara de framework porque entrega uma pipeline segura reutilizavel.
+- Nao e um framework full-stack de agentes nem um SDK MCP completo.
+
+Esse limite e intencional: o objetivo e adicionar governanca e seguranca sem tomar posse da arquitetura inteira da aplicacao.
+
 ## Visao em Camadas
 
 ```mermaid

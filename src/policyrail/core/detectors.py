@@ -11,10 +11,14 @@ class PromptInjectionDetector:
         *,
         review_threshold: int = 25,
         block_threshold: int = 60,
+        degraded_review_floor: int | None = None,
     ) -> None:
         self.classifier = classifier or LightweightNLPClassifier()
         self.review_threshold = review_threshold
         self.block_threshold = block_threshold
+        self.degraded_review_floor = (
+            review_threshold if degraded_review_floor is None else degraded_review_floor
+        )
 
     def detect(self, text: str, *, source: str = "user_input") -> RiskAssessment:
         if not text.strip():
@@ -22,6 +26,8 @@ class PromptInjectionDetector:
 
         classification = self.classifier.classify(text)
         score = min(100, round(classification.malicious_probability * 100))
+        if classification.degraded and score < self.degraded_review_floor:
+            score = self.degraded_review_floor
         blocked = score >= self.block_threshold
 
         findings: list[RiskFinding] = []

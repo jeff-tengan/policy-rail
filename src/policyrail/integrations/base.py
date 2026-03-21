@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from typing import Callable
 
@@ -44,6 +45,8 @@ class RemoteJudgePreflightClassifier(ABC):
                 summary="Entrada vazia no preflight.",
                 matched_signals=[],
                 model_name=self.model,
+                degraded=False,
+                degradation_reason=None,
             )
 
         try:
@@ -65,6 +68,8 @@ class RemoteJudgePreflightClassifier(ABC):
                 summary=f"LLM Judge de {self.provider_name} classificou o prompt como malicioso.",
                 matched_signals=[self._clip(verdict)],
                 model_name=self.model,
+                degraded=False,
+                degradation_reason=None,
             )
         if normalized_verdict == "benign":
             return PreflightClassification(
@@ -73,6 +78,8 @@ class RemoteJudgePreflightClassifier(ABC):
                 summary=f"LLM Judge de {self.provider_name} classificou o prompt como benigno.",
                 matched_signals=[],
                 model_name=self.model,
+                degraded=False,
+                degradation_reason=None,
             )
 
         return self._fallback(
@@ -91,6 +98,8 @@ class RemoteJudgePreflightClassifier(ABC):
                 summary=reason,
                 matched_signals=[],
                 model_name=f"{self.model}-fallback-disabled",
+                degraded=True,
+                degradation_reason=reason,
             )
 
         fallback_result = self.fallback_classifier.classify(text)
@@ -100,14 +109,16 @@ class RemoteJudgePreflightClassifier(ABC):
             summary=f"{reason} {fallback_result.summary}",
             matched_signals=fallback_result.matched_signals,
             model_name=fallback_result.model_name,
+            degraded=True,
+            degradation_reason=reason,
         )
 
     @staticmethod
     def _normalize_verdict(verdict: str) -> str | None:
-        normalized = verdict.strip().upper()
-        if "MALICIOUS" in normalized:
+        normalized = re.sub(r'^[\s"\'`]+|[\s"\'`]+$', "", verdict).upper()
+        if normalized == "MALICIOUS":
             return "malicious"
-        if "BENIGN" in normalized:
+        if normalized == "BENIGN":
             return "benign"
         return None
 

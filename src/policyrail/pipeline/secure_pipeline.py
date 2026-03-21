@@ -134,6 +134,24 @@ class SecureGenAIPipeline:
                 model_metadata=llm_response.metadata,
             )
 
+        tool_validation_errors = self._validate_tool_call(tool_call)
+        if tool_validation_errors:
+            hardened_decision = self._escalate_tool_validation_violation(
+                decision,
+                tool_validation_errors,
+            )
+            return self._finalize_response(
+                request=request,
+                envelope=envelope,
+                risk=risk,
+                decision=hardened_decision,
+                output_validation=output_validation,
+                response_text="A tool solicitada foi retida por argumentos fora da policy.",
+                tool_call=None,
+                tool_result=None,
+                model_metadata=llm_response.metadata,
+            )
+
         tool_result = self._execute_tool(tool_call)
         model_metadata = dict(llm_response.metadata)
         if tool_result is not None:
@@ -207,15 +225,19 @@ class SecureGenAIPipeline:
             envelope=envelope,
             model_metadata=dict(model_metadata or {}),
         )
-        response.audit_id = self.audit_logger.record_interaction(
-            request=request,
-            risk=risk,
-            decision=decision,
-            output_validation=output_validation,
-            response_text=response_text,
-            tool_call=tool_call,
-            tool_result=tool_result,
-        )
+        try:
+            response.audit_id = self.audit_logger.record_interaction(
+                request=request,
+                risk=risk,
+                decision=decision,
+                output_validation=output_validation,
+                response_text=response_text,
+                tool_call=tool_call,
+                tool_result=tool_result,
+            )
+        except Exception as exc:
+            response.audit_id = None
+            response.model_metadata["audit_logging_error"] = exc.__class__.__name__
         return response
 
     def _execute_tool(self, tool_call: ToolCall | None) -> ToolExecutionResult | None:
@@ -236,6 +258,25 @@ class SecureGenAIPipeline:
                 },
             )
 
+    def _validate_tool_call(self, tool_call: ToolCall | None) -> list[str]:
+        if tool_call is None or self.tool_executor is None:
+            return []
+
+        validator = getattr(self.tool_executor, "validate", None)
+        if not callable(validator):
+            return []
+
+        try:
+            validation_errors = validator(tool_call)
+        except Exception as exc:
+            return [
+                (
+                    "Falha ao validar argumentos da tool antes da execucao "
+                    f"({exc.__class__.__name__})."
+                )
+            ]
+        return list(validation_errors or [])
+
     def _escalate_output_violation(
         self,
         decision: PolicyDecision,
@@ -246,6 +287,20 @@ class SecureGenAIPipeline:
         reasons.append("Saida bloqueada pelo validador final.")
         return PolicyDecision(
             status="block",
+            reasons=list(dict.fromkeys(reasons)),
+            allow_tool_execution=False,
+        )
+
+    def _escalate_tool_validation_violation(
+        self,
+        decision: PolicyDecision,
+        validation_errors: list[str],
+    ) -> PolicyDecision:
+        reasons = list(decision.reasons)
+        reasons.extend(validation_errors)
+        reasons.append("Tool retida por validacao de argumentos.")
+        return PolicyDecision(
+            status="review" if decision.status != "block" else "block",
             reasons=list(dict.fromkeys(reasons)),
             allow_tool_execution=False,
         )

@@ -37,6 +37,21 @@ class _MCPSearchAdapter:
         )
 
 
+class _MCPSearchAdapterWithUnexpectedArgument:
+    def generate(self, envelope):
+        return LLMResponse(
+            text="Consultando base aprovada via MCP.",
+            tool_call=ToolCall(
+                name="search_policy_docs",
+                arguments={
+                    "query": envelope.user_input,
+                    "top_k": 2,
+                    "unexpected": "secret",
+                },
+            ),
+        )
+
+
 class MCPIntegrationTests(unittest.TestCase):
     def test_jsonrpc_client_lists_and_calls_tools(self) -> None:
         transport = InMemoryMCPTransport()
@@ -149,6 +164,56 @@ class MCPIntegrationTests(unittest.TestCase):
             "Password Policy",
         )
         self.assertTrue(response.model_metadata["tool_execution"]["success"])
+
+    def test_pipeline_rejects_tool_arguments_outside_schema(self) -> None:
+        transport = InMemoryMCPTransport()
+        transport.register_tool(
+            name="search_policy_docs",
+            description="Busca documentos aprovados.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "top_k": {"type": "integer"},
+                },
+                "required": ["query"],
+                "additionalProperties": False,
+            },
+            handler=lambda arguments: {
+                "content": [{"type": "text", "text": str(arguments)}],
+            },
+        )
+        client = JSONRPCMCPClient(transport)
+        registry = MCPToolRegistry(
+            client,
+            tool_policies={
+                "search_policy_docs": MCPToolPolicy(
+                    sensitive=False,
+                    requires_human_approval=False,
+                    max_risk_score=35,
+                )
+            },
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pipeline = SecureGenAIPipeline(
+                llm_adapter=_MCPSearchAdapterWithUnexpectedArgument(),
+                policy_engine=PolicyEngine(registry.build_tool_specs()),
+                tool_executor=MCPToolExecutor(client, server_name="policy-kb"),
+                audit_logger=JsonAuditLogger(Path(tmpdir) / "audit.jsonl"),
+            )
+            response = pipeline.process(
+                SecureRequest(
+                    user_input="Qual e a politica de senha corporativa?",
+                    system_instruction=DEFAULT_SYSTEM_POLICY,
+                    trusted_context=["Base de politicas aprovada"],
+                )
+            )
+
+        self.assertEqual(response.status, "review")
+        self.assertIsNone(response.tool_call)
+        self.assertIsNone(response.tool_result)
+        self.assertIn("input schema", " ".join(response.decision.reasons))
 
 
 if __name__ == "__main__":

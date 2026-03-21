@@ -9,7 +9,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from policyrail import LightweightNLPClassifier, OpenAIPreflightClassifier
+from policyrail import LightweightNLPClassifier, OpenAIPreflightClassifier, PromptInjectionDetector
 
 
 class _FakeMessage:
@@ -65,6 +65,22 @@ class OpenAIPreflightClassifierTests(unittest.TestCase):
 
         self.assertEqual(result.label, "malicious")
         self.assertIn("fallback", result.summary.casefold())
+        self.assertTrue(result.degraded)
+
+    def test_unrecognized_remote_verdict_forces_degraded_review(self) -> None:
+        classifier = OpenAIPreflightClassifier(
+            client=_FakeClient("This is benign, not malicious"),
+            fallback_classifier=LightweightNLPClassifier(),
+        )
+
+        result = classifier.classify("Explique a politica de senhas")
+        detector = PromptInjectionDetector(classifier=classifier)
+        assessment = detector.detect("Explique a politica de senhas")
+
+        self.assertEqual(result.label, "benign")
+        self.assertTrue(result.degraded)
+        self.assertGreaterEqual(assessment.score, detector.review_threshold)
+        self.assertFalse(assessment.blocked)
 
 
 if __name__ == "__main__":
